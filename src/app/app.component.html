@@ -1,0 +1,234 @@
+<div class="app-layout">
+  <!-- 1. TOP HEADER & NAVIGATION -->
+  <header class="header">
+    <div class="header-container">
+      <!-- Store Title & Brand -->
+      <div class="brand">
+        <div class="brand-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+        </div>
+        <h1 class="store-title">Laiba Ecommerce Store</h1>
+      </div>
+
+      <!-- Live Search Input Box -->
+      <div class="search-box">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input 
+          type="text" 
+          placeholder="Search products by title or description..." 
+          [value]="searchQuery()" 
+          (input)="onSearchInput($event)"
+          class="search-input"
+          aria-label="Search products"
+        />
+        @if (searchQuery()) {
+          <button class="clear-search-btn" (click)="clearSearch()" title="Clear search">
+            ✕
+          </button>
+        }
+      </div>
+
+      <!-- Cart Button with Live Counter Badge -->
+      <div class="header-actions">
+        <button class="cart-btn" (click)="toggleCart()" aria-label="Shopping Cart">
+          <div class="cart-icon-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+            </svg>
+            @if (cartTotalCount() > 0) {
+              <span class="cart-badge">{{ cartTotalCount() }}</span>
+            }
+          </div>
+          <span class="cart-text">Cart</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. MAIN CONTENT AREA (Sidebar + Product Grid) -->
+  <main class="main-content">
+    <div class="content-wrapper">
+      
+      <!-- 4. SIDEBAR CATEGORY NAVIGATION -->
+      <aside class="sidebar">
+        <div class="sidebar-card">
+          <h2 class="sidebar-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="10" y1="3" y2="21"/><line x1="16" x2="16" y1="3" y2="21"/>
+            </svg>
+            Categories
+          </h2>
+          <nav class="category-nav">
+            @for (cat of categories; track cat) {
+              <button 
+                class="category-item" 
+                [class.active]="selectedCategory() === cat"
+                (click)="onSelectCategory(cat)"
+              >
+                <span class="category-name">{{ cat }}</span>
+                <span class="category-bullet" [class.active-bullet]="selectedCategory() === cat"></span>
+              </button>
+            }
+          </nav>
+        </div>
+      </aside>
+
+      <!-- 5. PRODUCT DISPLAY SECTION -->
+      <section class="products-section">
+        <!-- Results Bar -->
+        <div class="results-header">
+          <div>
+            <h2 class="section-title">
+              {{ selectedCategory() === 'All' ? 'All Products' : selectedCategory() }}
+            </h2>
+            <p class="results-count">
+              Showing {{ filteredProducts().length }} {{ filteredProducts().length === 1 ? 'item' : 'items' }}
+              @if (searchQuery()) {
+                matching "<span class="highlight-query">{{ searchQuery() }}</span>"
+              }
+            </p>
+          </div>
+          @if (searchQuery()) {
+            <button class="reset-filter-btn" (click)="clearSearch()">Reset Search</button>
+          }
+        </div>
+
+        <!-- Modern Angular 17+ Control Flow: @if and @for -->
+        @if (filteredProducts().length > 0) {
+          <div class="product-grid">
+            @for (product of filteredProducts(); track product.id) {
+              <article class="product-card" [class.out-of-stock-card]="!product.inStock">
+                <!-- Product Image Container -->
+                <div class="card-media">
+                  <img 
+                    [src]="product.imageUrl" 
+                    [alt]="product.name" 
+                    class="product-image"
+                    loading="lazy"
+                  />
+                  <!-- In Stock / Out of Stock Badge -->
+                  @if (product.inStock) {
+                    <span class="badge in-stock">
+                      <span class="badge-dot dot-green"></span> In Stock
+                    </span>
+                  } @else {
+                    <span class="badge out-of-stock">
+                      <span class="badge-dot dot-red"></span> Out of Stock
+                    </span>
+                  }
+                  <span class="category-tag">{{ product.category }}</span>
+                </div>
+
+                <!-- Product Info & Details -->
+                <div class="card-body">
+                  <h3 class="product-name" [title]="product.name">{{ product.name }}</h3>
+                  <p class="product-desc">{{ product.description }}</p>
+                  
+                  <div class="card-footer">
+                    <div class="price-container">
+                      <span class="price-label">Price</span>
+                      <span class="product-price">${{ product.price.toFixed(2) }}</span>
+                    </div>
+                    <button 
+                      class="add-to-cart-btn" 
+                      [disabled]="!product.inStock"
+                      (click)="addToCart(product)"
+                      [title]="product.inStock ? 'Add to Cart' : 'Currently Unavailable'"
+                    >
+                      @if (product.inStock) {
+                        <span>Add to Cart</span>
+                      } @else {
+                        <span>Sold Out</span>
+                      }
+                    </button>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        } @else {
+          <!-- Empty State -->
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <h3 class="empty-title">No products found</h3>
+            <p class="empty-subtitle">We couldn't find any products matching your search or category filter.</p>
+            <button class="clear-filters-btn" (click)="onSelectCategory('All'); clearSearch()">
+              Clear All Filters
+            </button>
+          </div>
+        }
+      </section>
+
+    </div>
+  </main>
+
+  <!-- 3. CART SLIDEOUT DRAWER -->
+  @if (isCartOpen()) {
+    <div class="drawer-overlay" (click)="closeCart()">
+      <div class="drawer-panel" (click)="$event.stopPropagation()">
+        <div class="drawer-header">
+          <div class="drawer-title-group">
+            <h3>Shopping Cart</h3>
+            <span class="drawer-badge">{{ cartTotalCount() }} items</span>
+          </div>
+          <button class="drawer-close-btn" (click)="closeCart()" aria-label="Close Cart">✕</button>
+        </div>
+
+        <div class="drawer-body">
+          @if (cartItems().length > 0) {
+            <div class="cart-items-list">
+              @for (item of cartItems(); track item.product.id) {
+                <div class="cart-item">
+                  <img [src]="item.product.imageUrl" [alt]="item.product.name" class="cart-item-img" />
+                  <div class="cart-item-info">
+                    <h4 class="cart-item-title">{{ item.product.name }}</h4>
+                    <p class="cart-item-price">${{ item.product.price.toFixed(2) }}</p>
+                    <div class="quantity-controls">
+                      <button (click)="updateQuantity(item.product.id, item.quantity - 1)" class="qty-btn">-</button>
+                      <span class="qty-count">{{ item.quantity }}</span>
+                      <button (click)="updateQuantity(item.product.id, item.quantity + 1)" class="qty-btn">+</button>
+                    </div>
+                  </div>
+                  <button class="remove-item-btn" (click)="removeFromCart(item.product.id)" title="Remove item">
+                    🗑️
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-cart-state">
+              <div class="empty-cart-icon">🛒</div>
+              <p class="empty-cart-text">Your cart is currently empty.</p>
+              <button class="shop-now-btn" (click)="closeCart()">Browse Products</button>
+            </div>
+          }
+        </div>
+
+        @if (cartItems().length > 0) {
+          <div class="drawer-footer">
+            <div class="total-row">
+              <span>Subtotal:</span>
+              <span class="total-price">${{ cartTotalPrice().toFixed(2) }}</span>
+            </div>
+            <button class="checkout-btn" (click)="checkout()">
+              Proceed to Checkout (${{ cartTotalPrice().toFixed(2) }})
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Toast Notification Feedback -->
+  @if (notificationMessage()) {
+    <div class="toast-notification">
+      <span class="toast-icon">✓</span>
+      <span>{{ notificationMessage() }}</span>
+    </div>
+  }
+</div>

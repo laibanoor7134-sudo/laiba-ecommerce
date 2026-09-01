@@ -1,0 +1,6 @@
+{
+  "name": "Laiba Ecommerce Store",
+  "description": "A modern, complete e-commerce store with real-time search, category filtering, cart management, and product catalog.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
